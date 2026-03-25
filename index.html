@@ -328,10 +328,53 @@
       <div id="viewerContent" class="content"></div>
     </main>
   </div>
-  <script src="kb-data.js"></script>
   <script>
-    let MANUAL_LAST_UPDATED_DATE = window.KB_LAST_UPDATED || "Unknown";
-    const CURRENT_KB_BUILD_VERSION = window.KB_BUILD_VERSION || "local-dev";
+    let MANUAL_LAST_UPDATED_DATE = "Unknown";
+    let CURRENT_KB_BUILD_VERSION = "";
+    let demoCases = {};
+
+    function loadKbScript(versionTag) {
+      return new Promise((resolve, reject) => {
+        document.querySelectorAll('script[data-kb-script="true"]').forEach(el => el.remove());
+        delete window.KB_BUILD_VERSION;
+        delete window.KB_LAST_UPDATED;
+        delete window.KB_DATA;
+
+        const script = document.createElement('script');
+        script.src = `./kb-data.js?v=${encodeURIComponent(versionTag || Date.now())}`;
+        script.dataset.kbScript = 'true';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load kb-data.js'));
+        document.body.appendChild(script);
+      });
+    }
+
+    async function loadLatestKbData(preferredVersion = '') {
+      let remoteVersion = preferredVersion;
+      let remoteUpdatedAt = '';
+
+      try {
+        const response = await fetch(`./version.json?ts=${Date.now()}`, { cache: 'no-store' });
+        if (response.ok) {
+          const versionInfo = await response.json();
+          remoteVersion = (versionInfo.version || '').trim() || remoteVersion;
+          remoteUpdatedAt = (versionInfo.updatedAt || '').trim();
+        }
+      } catch (error) {
+        // Ignore version fetch errors and fall back to timestamp-based cache busting.
+      }
+
+      await loadKbScript(remoteVersion || Date.now());
+
+      demoCases = window.KB_DATA || {};
+      CURRENT_KB_BUILD_VERSION = (window.KB_BUILD_VERSION || remoteVersion || 'local-dev').trim();
+      MANUAL_LAST_UPDATED_DATE = (remoteUpdatedAt || window.KB_LAST_UPDATED || MANUAL_LAST_UPDATED_DATE || 'Unknown').trim();
+
+      return {
+        version: CURRENT_KB_BUILD_VERSION,
+        updatedAt: MANUAL_LAST_UPDATED_DATE
+      };
+    }
 
     const navLinks = document.querySelectorAll('.nav-link');
     const categories = document.querySelectorAll('.cat');
@@ -348,8 +391,6 @@
       const arabicRegex = /[\u0600-\u06FF]/;
       return arabicRegex.test(text);
     }
-
-    const demoCases = window.KB_DATA || {};
 
     let updateBannerContainer = document.getElementById('updateBannerContainer');
     if (!updateBannerContainer) {
@@ -375,7 +416,19 @@
         </div>`;
       const reloadKbBtn = document.getElementById('reloadKbBtn');
       if (reloadKbBtn) {
-        reloadKbBtn.addEventListener('click', () => window.location.reload());
+        reloadKbBtn.addEventListener('click', async () => {
+          reloadKbBtn.disabled = true;
+          reloadKbBtn.textContent = 'Updating...';
+          try {
+            await loadLatestKbData();
+            clearUpdateBanner();
+            renderHomePage();
+          } catch (error) {
+            reloadKbBtn.disabled = false;
+            reloadKbBtn.textContent = 'Update now';
+            alert('Could not load the latest update. Please try again.');
+          }
+        });
       }
     }
 
@@ -940,9 +993,21 @@
         performGlobalSearch(event.target.value.trim());
     }, 300));
 
-    renderHomePage();
-    checkForKbUpdates();
-    setInterval(checkForKbUpdates, 60000);
+    async function initializeKBApp() {
+      try {
+        await loadLatestKbData();
+      } catch (error) {
+        demoCases = window.KB_DATA || {};
+        CURRENT_KB_BUILD_VERSION = (window.KB_BUILD_VERSION || 'local-dev').trim();
+        MANUAL_LAST_UPDATED_DATE = (window.KB_LAST_UPDATED || MANUAL_LAST_UPDATED_DATE || 'Unknown').trim();
+      }
+
+      renderHomePage();
+      checkForKbUpdates();
+      setInterval(checkForKbUpdates, 60000);
+    }
+
+    initializeKBApp();
 
   </script>
 
