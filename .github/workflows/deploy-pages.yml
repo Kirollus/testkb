@@ -39,10 +39,19 @@ jobs:
               text,
               count=1,
           )
+
+          changes_match = re.search(r'window\.KB_LATEST_CHANGES\s*=\s*(\[[\s\S]*?\])\s*;', text)
+          latest_changes = []
+          if changes_match:
+              try:
+                  latest_changes = json.loads(changes_match.group(1))
+              except Exception:
+                  latest_changes = []
+
           kb_file.write_text(text, encoding='utf-8')
 
           Path('version.json').write_text(
-              json.dumps({'version': build_version, 'updatedAt': updated_at}, ensure_ascii=False, indent=2),
+              json.dumps({'version': build_version, 'updatedAt': updated_at, 'changes': latest_changes}, ensure_ascii=False, indent=2),
               encoding='utf-8'
           )
           PY
