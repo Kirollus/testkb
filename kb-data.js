@@ -3,15 +3,20 @@ window.KB_BUILD_VERSION = "__BUILD_VERSION__";
 window.KB_LAST_UPDATED = "16 Feb 2026";
 
 window.KB_LATEST_CHANGES = [
-  "Updates"
+  "New Updates"
 ];
 
 window.KB_DATA = {
       updates: [
+		  {
+			date: "12 March 2026",
+          title: "Slack Reports",
+          description: "Any report will be assigned to you from Slack, you should add (Slack Channel) in the ticket's subject."
+		  },
 		{
           date: "21 January 2026",
           title: "Refund Process",
-          description: "If we create a refund ticket, we should send it via Slack to the available senior to take action immediately"
+          description: "If we create a refund ticket, we should send it via Slack to the available senior to take action immediately."
         },
         {
           date: "5 October 2025",
