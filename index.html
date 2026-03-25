@@ -332,6 +332,7 @@
     let MANUAL_LAST_UPDATED_DATE = "Unknown";
     let CURRENT_KB_BUILD_VERSION = "";
     let demoCases = {};
+    let LATEST_REMOTE_CHANGES = [];
 
     function loadKbScript(versionTag) {
       return new Promise((resolve, reject) => {
@@ -359,6 +360,7 @@
           const versionInfo = await response.json();
           remoteVersion = (versionInfo.version || '').trim() || remoteVersion;
           remoteUpdatedAt = (versionInfo.updatedAt || '').trim();
+          LATEST_REMOTE_CHANGES = Array.isArray(versionInfo.changes) ? versionInfo.changes : [];
         }
       } catch (error) {
         // Ignore version fetch errors and fall back to timestamp-based cache busting.
@@ -369,6 +371,7 @@
       demoCases = window.KB_DATA || {};
       CURRENT_KB_BUILD_VERSION = (window.KB_BUILD_VERSION || remoteVersion || 'local-dev').trim();
       MANUAL_LAST_UPDATED_DATE = (remoteUpdatedAt || window.KB_LAST_UPDATED || MANUAL_LAST_UPDATED_DATE || 'Unknown').trim();
+      LATEST_REMOTE_CHANGES = Array.isArray(window.KB_LATEST_CHANGES) && window.KB_LATEST_CHANGES.length ? window.KB_LATEST_CHANGES : LATEST_REMOTE_CHANGES;
 
       return {
         version: CURRENT_KB_BUILD_VERSION,
@@ -408,10 +411,18 @@
         .replace(/'/g, '&#39;');
     }
 
-    function renderUpdateBanner(remoteUpdatedAt) {
+    function renderUpdateBanner(remoteUpdatedAt, changes = []) {
+      const safeChanges = Array.isArray(changes) ? changes.filter(Boolean).slice(0, 6) : [];
+      const changesHtml = safeChanges.length
+        ? `<div style="font-size: 13px; margin-top: 6px;"><div style="font-weight: 700; margin-bottom: 4px;">Updated in:</div><ul style="margin: 0; padding-left: 18px;">${safeChanges.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`
+        : '';
+
       updateBannerContainer.innerHTML = `
         <div style="margin: 0 0 12px 0; padding: 12px 14px; border-radius: 12px; background: #fff3cd; color: #7a4b00; border: 1px solid #ffe69c; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-          <div><strong>New update available.</strong> ${remoteUpdatedAt ? `Published: ${escapeHtml(remoteUpdatedAt)}` : ''}</div>
+          <div>
+            <div><strong>New update available.</strong> ${remoteUpdatedAt ? `Published: ${escapeHtml(remoteUpdatedAt)}` : ''}</div>
+            ${changesHtml}
+          </div>
           <button id="reloadKbBtn" style="border: none; border-radius: 10px; padding: 9px 14px; cursor: pointer; background: #ffb300; color: #111; font-weight: 700;">Update now</button>
         </div>`;
       const reloadKbBtn = document.getElementById('reloadKbBtn');
@@ -444,6 +455,7 @@
         const versionInfo = await response.json();
         const remoteVersion = (versionInfo.version || '').trim();
         const remoteUpdatedAt = (versionInfo.updatedAt || '').trim();
+        const remoteChanges = Array.isArray(versionInfo.changes) ? versionInfo.changes : [];
 
         if (remoteUpdatedAt && remoteUpdatedAt !== MANUAL_LAST_UPDATED_DATE) {
           MANUAL_LAST_UPDATED_DATE = remoteUpdatedAt;
@@ -454,7 +466,7 @@
         }
 
         if (remoteVersion && remoteVersion !== CURRENT_KB_BUILD_VERSION && !String(CURRENT_KB_BUILD_VERSION).includes('__BUILD_VERSION__')) {
-          renderUpdateBanner(remoteUpdatedAt);
+          renderUpdateBanner(remoteUpdatedAt, remoteChanges);
         } else {
           clearUpdateBanner();
         }
