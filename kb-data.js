@@ -2,6 +2,10 @@ window.KB_BUILD_VERSION = "__BUILD_VERSION__";
 
 window.KB_LAST_UPDATED = "16 Feb 2026";
 
+window.KB_LATEST_CHANGES = [
+  "Updates"
+];
+
 window.KB_DATA = {
       updates: [
 		{
@@ -38,7 +42,7 @@ window.KB_DATA = {
         description: " العميل اشتكى ان المنتج مكسور أو مفتت أو مقسوم أو متفعص أو مهروس أومفتوح",
   		cx: "1. Understand the issue and apologize to the customer with empathy.<br>2. Click on edit to check the order details on Yelo.<br>*Check the previous tickets, In case a ticket was handled over another channel.<br>3. Ask for a photo of the item that has an issue. (It's important to educate the customer that we need the photo for the report, and it will help us in the investigation in addition to picking up the product).<br>4. Offer the designed compensation and apply it through  Switcher by selecting the order, Wallet Refund and Choosing Product issue as a refund reason and Product Damaged.<br>5. If the customer asked for a replacement, kindly inform them that we are currently unable to send replacement orders, However, we can only refund the amount of product/order.<br>6. Report the ticket on freshdesk and add a note in the ticket with full details.",
   tree: "Ticket Tree: Restaurant, Complaints, Product, Appearance, Smashed<br>Group: CX ( As per your group )<br>Status: Resolved/Closed (USE THIS)",
-  treeCx: "Partially Smashed> 50% refund of the item amount +  Delivery Fees Compensation<br>Fully Smashed > 100% refund of the item + Delivery Fees Compensation"
+  treeCx: "100% refund of the item + Delivery Fees"
 },
         {
   case: "Freshness",
